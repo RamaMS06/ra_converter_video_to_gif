@@ -40,13 +40,28 @@ def convert_video(input_path, output_path, output_format, task_id):
         conversion_progress[task_id]['progress'] = 25
         
         if output_format == 'gif':
-            # Convert to GIF with optimization
+            # Convert to GIF preserving original timing and quality
+            # Use original fps but cap at 24fps for reasonable file size
+            original_fps = clip.fps
+            gif_fps = min(original_fps, 24) if original_fps else 15
+            
+            # For very long videos, reduce fps to keep file size manageable
+            duration = clip.duration
+            if duration > 10:  # If video is longer than 10 seconds
+                gif_fps = min(gif_fps, 15)
+            elif duration > 30:  # If video is longer than 30 seconds
+                gif_fps = min(gif_fps, 12)
+            
+            conversion_progress[task_id]['progress'] = 40
+            
             clip.write_gif(
                 output_path,
-                fps=10,
+                fps=gif_fps,
                 program='ffmpeg',
                 opt='optimizeplus',
-                fuzz=2
+                fuzz=1,  # Lower fuzz for better quality
+                verbose=False,
+                logger=None
             )
         elif output_format == 'mp4':
             # Convert to MP4
