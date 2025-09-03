@@ -2,6 +2,10 @@ import os
 import uuid
 from flask import Flask, render_template, request, jsonify, send_file, flash
 from werkzeug.utils import secure_filename
+
+# Apply Pillow compatibility fix before importing MoviePy
+import pillow_fix
+
 from moviepy.editor import VideoFileClip
 import threading
 import time

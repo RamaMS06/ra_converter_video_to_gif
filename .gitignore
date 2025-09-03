@@ -52,9 +52,13 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Application specific
-uploads/
-outputs/
+# Application specific - ignore all files in these directories but keep the directories
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Video files anywhere in the project
 *.mp4
 *.avi
 *.mov
