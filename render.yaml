@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: mp4-video-converter
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    autoDeploy: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
