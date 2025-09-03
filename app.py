@@ -40,29 +40,88 @@ def convert_video(input_path, output_path, output_format, task_id):
         conversion_progress[task_id]['progress'] = 25
         
         if output_format == 'gif':
-            # Convert to GIF preserving original timing and quality
-            # Use original fps but cap at 24fps for reasonable file size
-            original_fps = clip.fps
-            gif_fps = min(original_fps, 24) if original_fps else 15
-            
-            # For very long videos, reduce fps to keep file size manageable
+            # Convert to GIF with aggressive size optimization to keep under 1MB
             duration = clip.duration
-            if duration > 10:  # If video is longer than 10 seconds
-                gif_fps = min(gif_fps, 15)
-            elif duration > 30:  # If video is longer than 30 seconds
-                gif_fps = min(gif_fps, 12)
+            original_fps = clip.fps
             
-            conversion_progress[task_id]['progress'] = 40
+            # Aggressive size reduction strategy
+            # Target: Keep final GIF under 1MB
             
+            # Step 1: Resize video if too large
+            width, height = clip.size
+            if width > 480 or height > 480:
+                # Resize to max 480px on longest side
+                if width > height:
+                    new_width = 480
+                    new_height = int(height * (480 / width))
+                else:
+                    new_height = 480
+                    new_width = int(width * (480 / height))
+                clip = clip.resize((new_width, new_height))
+            
+            conversion_progress[task_id]['progress'] = 35
+            
+            # Step 2: Reduce FPS aggressively based on duration
+            if duration <= 3:
+                gif_fps = 15  # Short clips can have higher fps
+            elif duration <= 10:
+                gif_fps = 10  # Medium clips
+            elif duration <= 20:
+                gif_fps = 8   # Longer clips
+            else:
+                gif_fps = 6   # Very long clips
+            
+            # Step 3: Limit duration for very long videos
+            if duration > 30:
+                # Trim to first 30 seconds to keep size manageable
+                clip = clip.subclip(0, 30)
+                duration = 30
+            
+            conversion_progress[task_id]['progress'] = 50
+            
+            # Step 4: Use aggressive compression settings
             clip.write_gif(
                 output_path,
                 fps=gif_fps,
                 program='ffmpeg',
                 opt='optimizeplus',
-                fuzz=1,  # Lower fuzz for better quality
+                fuzz=3,  # Higher fuzz for smaller file size
                 verbose=False,
                 logger=None
             )
+            
+            conversion_progress[task_id]['progress'] = 85
+            
+            # Step 5: Check file size and apply additional optimization if needed
+            import os
+            file_size_mb = os.path.getsize(output_path) / (1024 * 1024)
+            
+            if file_size_mb > 1.0:  # If still over 1MB, apply more aggressive optimization
+                print(f"GIF size {file_size_mb:.1f}MB, applying additional optimization...")
+                
+                # Further reduce resolution and fps
+                if width > 320 or height > 320:
+                    if width > height:
+                        new_width = 320
+                        new_height = int(height * (320 / width))
+                    else:
+                        new_height = 320
+                        new_width = int(width * (320 / height))
+                    clip = clip.resize((new_width, new_height))
+                
+                # Reduce fps even more
+                gif_fps = max(gif_fps - 2, 4)  # Minimum 4fps
+                
+                # Re-convert with more aggressive settings
+                clip.write_gif(
+                    output_path,
+                    fps=gif_fps,
+                    program='ffmpeg',
+                    opt='optimizeplus',
+                    fuzz=5,  # Even higher fuzz
+                    verbose=False,
+                    logger=None
+                )
         elif output_format == 'mp4':
             # Convert to MP4
             clip.write_videofile(

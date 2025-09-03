@@ -5,6 +5,7 @@ A modern, user-friendly web application for converting MP4 videos to various for
 ## ✨ Features
 
 - **Multiple Format Support**: Convert to GIF, MP4, AVI, WebM
+- **Smart GIF Optimization**: Automatically keeps GIFs under 1MB with quality preservation
 - **Drag & Drop Interface**: Modern, intuitive file upload
 - **Real-time Progress**: Live conversion progress tracking
 - **File Management**: Automatic cleanup of temporary files
